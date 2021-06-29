@@ -15,6 +15,7 @@ export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
   const [searchValue, setSearchValue] = useState<string | null>()
   const [getStudents, data, loadState] = useApi<{ students: Person[] }>({ url: "get-homeboard-students" })
+  const [saveActiveRoll] = useApi({ url: "save-roll" })
   const [studentData, setStudentData] = useState<Person[] | undefined>([])
   const [classAttendanceCount, setClassAttendanceCount] = useState({ presentCount: 0, absentCount: 0, lateCount: 0 })
 
@@ -42,14 +43,14 @@ export const HomeBoardPage: React.FC = () => {
     if (action === "roll") {
       setIsRollMode(true)
     }
-    // else if (action === "sort") {
-    //   {
-    //     // sortStudents(value)
-    //   }
-    // }
   }
-  const onActiveRollAction = (action: ActiveRollAction) => {
+  const onActiveRollAction = async (action: ActiveRollAction) => {
     if (action === "exit") {
+      setStudentData(data?.students)
+      setIsRollMode(false)
+    } else if (action === "complete") {
+      await saveActiveRoll(studentData)
+      setStudentData(data?.students)
       setIsRollMode(false)
     }
   }
@@ -77,6 +78,14 @@ export const HomeBoardPage: React.FC = () => {
     })
     setClassAttendanceCount({ presentCount: presentCount?.length ?? 0, absentCount: absentCount?.length ?? 0, lateCount: lateCount?.length || 0 })
   }
+  const onStateIconClick = (value: any) => {
+    if (value !== "all") {
+      const rollBasedData = studentData?.filter((x) => x.type === value)
+      setStudentData(rollBasedData)
+    } else {
+      setStudentData(data?.students)
+    }
+  }
 
   return (
     <>
@@ -101,12 +110,18 @@ export const HomeBoardPage: React.FC = () => {
           </CenteredContainer>
         )}
       </S.PageContainer>
-      <ActiveRollOverlay isActive={isRollMode} onItemClick={onActiveRollAction} classAttendanceCount={classAttendanceCount} totalStudents={studentData?.length ?? 0} />
+      <ActiveRollOverlay
+        isActive={isRollMode}
+        onItemClick={onActiveRollAction}
+        classAttendanceCount={classAttendanceCount}
+        totalStudents={studentData?.length ?? 0}
+        onStateIconClick={onStateIconClick}
+      />
     </>
   )
 }
 
-type ToolbarAction = "roll" | "sort"
+type ToolbarAction = "roll" | "sort" | "complete"
 interface ToolbarProps {
   onItemClick: (action: ToolbarAction, value?: string) => void
   setSearchValue: React.Dispatch<React.SetStateAction<string | null | undefined>>
