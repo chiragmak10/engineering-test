@@ -10,6 +10,7 @@ import { useApi } from "shared/hooks/use-api"
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
 import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
 import InputBase from "@material-ui/core/InputBase"
+import { FormControl, MenuItem, Select } from "@material-ui/core"
 
 export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
@@ -18,10 +19,10 @@ export const HomeBoardPage: React.FC = () => {
   const [saveActiveRoll] = useApi({ url: "save-roll" })
   const [studentData, setStudentData] = useState<Person[] | undefined>([])
   const [classAttendanceCount, setClassAttendanceCount] = useState({ presentCount: 0, absentCount: 0, lateCount: 0 })
-
+  const [filterValue, setFilterValue] = useState({ sortDirection: "asc", sortValue: "" })
   useEffect(() => {
     if (data) setStudentData(data.students)
-  }, [data, loadState])
+  }, [data])
 
   useEffect(() => {
     void getStudents()
@@ -86,11 +87,32 @@ export const HomeBoardPage: React.FC = () => {
       setStudentData(data?.students)
     }
   }
-
+  useEffect(() => {
+    let sortedData: Person[] | undefined = []
+    if (filterValue.sortValue === "firstname") {
+      if (filterValue.sortDirection === "asc") {
+        sortedData = studentData?.sort((x, y) => x.first_name.localeCompare(y.first_name))
+        setStudentData(sortedData)
+      } else if (filterValue.sortDirection === "des") {
+        sortedData = studentData?.sort((x, y) => y.first_name.localeCompare(x.first_name))
+        setStudentData(sortedData)
+      }
+    } else if (filterValue.sortValue === "lastname") {
+      if (filterValue.sortDirection === "asc") {
+        sortedData = studentData?.sort((x, y) => x.last_name.localeCompare(y.last_name))
+        setStudentData(sortedData)
+      } else if (filterValue.sortDirection === "des") {
+        sortedData = studentData?.sort((x, y) => y.last_name.localeCompare(x.last_name))
+        setStudentData(sortedData)
+      }
+    } else {
+      setStudentData(studentData)
+    }
+  }, [filterValue, studentData])
   return (
     <>
       <S.PageContainer>
-        <Toolbar onItemClick={onToolbarAction} setSearchValue={setSearchValue} />
+        <Toolbar onItemClick={onToolbarAction} setSearchValue={setSearchValue} filterValue={filterValue} setFilterValue={setFilterValue} />
         {loadState === "loading" && (
           <CenteredContainer>
             <FontAwesomeIcon icon="spinner" size="2x" spin />
@@ -125,13 +147,47 @@ type ToolbarAction = "roll" | "sort" | "complete"
 interface ToolbarProps {
   onItemClick: (action: ToolbarAction, value?: string) => void
   setSearchValue: React.Dispatch<React.SetStateAction<string | null | undefined>>
+  filterValue: {
+    sortDirection: string
+    sortValue: string
+  }
+  setFilterValue: React.Dispatch<
+    React.SetStateAction<{
+      sortDirection: string
+      sortValue: string
+    }>
+  >
 }
 const Toolbar: React.FC<ToolbarProps> = (props) => {
-  const { onItemClick, setSearchValue } = props
+  const { onItemClick, setSearchValue, filterValue, setFilterValue } = props
 
   return (
     <S.ToolbarContainer>
-      <div onClick={() => onItemClick("sort")}></div>
+      <span>
+        <FormControl>
+          <S.Select label="Sort" defaultValue={"none"} onChange={(e) => setFilterValue({ ...filterValue, sortValue: e.target.value as string })}>
+            <MenuItem value={"none"}>None </MenuItem>
+            <MenuItem value={"firstname"}>Firstname </MenuItem>
+            <MenuItem value={"lastname"}>Lastname </MenuItem>
+          </S.Select>
+        </FormControl>
+        {filterValue.sortValue !== "none" &&
+          (filterValue.sortDirection === "asc" ? (
+            <S.FontAwesomeIcon
+              icon="arrow-up"
+              onClick={() => {
+                setFilterValue({ ...filterValue, sortDirection: "des" })
+              }}
+            />
+          ) : (
+            <S.FontAwesomeIcon
+              icon="arrow-down"
+              onClick={() => {
+                setFilterValue({ ...filterValue, sortDirection: "asc" })
+              }}
+            />
+          ))}
+      </span>
       <InputBase
         placeholder="Search…"
         inputProps={{
@@ -171,6 +227,20 @@ const S = {
       padding: ${Spacing.u2};
       font-weight: ${FontWeight.strong};
       border-radius: ${BorderRadius.default};
+    }
+  `,
+  FontAwesomeIcon: styled(FontAwesomeIcon)`
+    padding: 8px 8px;
+  `,
+  Select: styled(Select)`
+    display: inline;
+    .MuiSelect-select {
+      color: #fff;
+      width: 120px;
+    }
+    .MuiSelect-icon {
+      color: #fff;
+      outline: #fff;
     }
   `,
 }
