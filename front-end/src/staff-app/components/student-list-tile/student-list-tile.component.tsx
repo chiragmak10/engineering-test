@@ -1,4 +1,4 @@
-import React from "react"
+import React, { ReactElement } from "react"
 import styled from "styled-components"
 import { Spacing, BorderRadius, FontWeight } from "shared/styles/styles"
 import { Images } from "assets/images"
@@ -10,11 +10,10 @@ interface Props {
   isRollMode?: boolean
   student: Person
   updateStudentsData?: (newState: string, student: Person) => void
-  
 }
-export const StudentListTile: React.FC<Props> = ({ isRollMode, student,updateStudentsData  }) => {
-  const typeChange = (newState: string) => {
-    if(updateStudentsData) {
+export const StudentListTile: React.FC<Props> = ({ isRollMode, student, updateStudentsData }): ReactElement => {
+  const typeChange = (newState: string): void => {
+    if (updateStudentsData) {
       updateStudentsData(newState, student)
     }
   }
@@ -26,7 +25,7 @@ export const StudentListTile: React.FC<Props> = ({ isRollMode, student,updateStu
       </S.Content>
       {isRollMode && (
         <S.Roll>
-          <RollStateSwitcher  onStateChange={typeChange} />
+          <RollStateSwitcher onStateChange={typeChange} />
         </S.Roll>
       )}
     </S.Container>

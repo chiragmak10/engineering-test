@@ -10,7 +10,6 @@ import { useApi } from "shared/hooks/use-api"
 import { StudentListTile } from "staff-app/components/student-list-tile/student-list-tile.component"
 import { ActiveRollOverlay, ActiveRollAction } from "staff-app/components/active-roll-overlay/active-roll-overlay.component"
 import InputBase from "@material-ui/core/InputBase"
-import { FormControl, MenuItem, Select } from "@material-ui/core"
 
 export const HomeBoardPage: React.FC = () => {
   const [isRollMode, setIsRollMode] = useState(false)
@@ -19,7 +18,7 @@ export const HomeBoardPage: React.FC = () => {
   const [saveActiveRoll] = useApi({ url: "save-roll" })
   const [studentData, setStudentData] = useState<Person[] | undefined>([])
   const [classAttendanceCount, setClassAttendanceCount] = useState({ presentCount: 0, absentCount: 0, lateCount: 0 })
-  const [filterValue, setFilterValue] = useState({ sortDirection: "asc", sortValue: "" })
+
   useEffect(() => {
     if (data) setStudentData(data.students)
   }, [data])
@@ -40,12 +39,12 @@ export const HomeBoardPage: React.FC = () => {
     }
   }, [data, searchValue])
 
-  const onToolbarAction = (action: ToolbarAction, value: string | undefined) => {
+  const onToolbarAction = (action: ToolbarAction) => {
     if (action === "roll") {
       setIsRollMode(true)
     }
   }
-  const onActiveRollAction = async (action: ActiveRollAction) => {
+  const onActiveRollAction = async (action: ActiveRollAction): Promise<void> => {
     if (action === "exit") {
       setStudentData(data?.students)
       setIsRollMode(false)
@@ -55,7 +54,7 @@ export const HomeBoardPage: React.FC = () => {
       setIsRollMode(false)
     }
   }
-  const updateStudentsData = (type: string, student: Person) => {
+  const updateStudentsData = (type: string, student: Person): void => {
     const updatedData = studentData?.map((item) => {
       if (item.id === student.id) {
         return { ...item, type: type }
@@ -67,7 +66,7 @@ export const HomeBoardPage: React.FC = () => {
     updateStudentsCount(updatedData)
   }
 
-  const updateStudentsCount = (updatedData: any[] | undefined) => {
+  const updateStudentsCount = (updatedData: any[] | undefined): void => {
     const presentCount = updatedData?.filter((x: Person) => {
       return x?.type === "present"
     })
@@ -87,32 +86,10 @@ export const HomeBoardPage: React.FC = () => {
       setStudentData(data?.students)
     }
   }
-  useEffect(() => {
-    let sortedData: Person[] | undefined = []
-    if (filterValue.sortValue === "firstname") {
-      if (filterValue.sortDirection === "asc") {
-        sortedData = studentData?.sort((x, y) => x.first_name.localeCompare(y.first_name))
-        setStudentData(sortedData)
-      } else if (filterValue.sortDirection === "des") {
-        sortedData = studentData?.sort((x, y) => y.first_name.localeCompare(x.first_name))
-        setStudentData(sortedData)
-      }
-    } else if (filterValue.sortValue === "lastname") {
-      if (filterValue.sortDirection === "asc") {
-        sortedData = studentData?.sort((x, y) => x.last_name.localeCompare(y.last_name))
-        setStudentData(sortedData)
-      } else if (filterValue.sortDirection === "des") {
-        sortedData = studentData?.sort((x, y) => y.last_name.localeCompare(x.last_name))
-        setStudentData(sortedData)
-      }
-    } else {
-      setStudentData(studentData)
-    }
-  }, [filterValue, studentData])
   return (
     <>
       <S.PageContainer>
-        <Toolbar onItemClick={onToolbarAction} setSearchValue={setSearchValue} filterValue={filterValue} setFilterValue={setFilterValue} />
+        <Toolbar onItemClick={onToolbarAction} setSearchValue={setSearchValue} />
         {loadState === "loading" && (
           <CenteredContainer>
             <FontAwesomeIcon icon="spinner" size="2x" spin />
@@ -147,47 +124,13 @@ type ToolbarAction = "roll" | "sort" | "complete"
 interface ToolbarProps {
   onItemClick: (action: ToolbarAction, value?: string) => void
   setSearchValue: React.Dispatch<React.SetStateAction<string | null | undefined>>
-  filterValue: {
-    sortDirection: string
-    sortValue: string
-  }
-  setFilterValue: React.Dispatch<
-    React.SetStateAction<{
-      sortDirection: string
-      sortValue: string
-    }>
-  >
 }
 const Toolbar: React.FC<ToolbarProps> = (props) => {
-  const { onItemClick, setSearchValue, filterValue, setFilterValue } = props
+  const { onItemClick, setSearchValue } = props
 
   return (
     <S.ToolbarContainer>
-      <span>
-        <FormControl>
-          <S.Select label="Sort" defaultValue={"none"} onChange={(e) => setFilterValue({ ...filterValue, sortValue: e.target.value as string })}>
-            <MenuItem value={"none"}>None </MenuItem>
-            <MenuItem value={"firstname"}>Firstname </MenuItem>
-            <MenuItem value={"lastname"}>Lastname </MenuItem>
-          </S.Select>
-        </FormControl>
-        {filterValue.sortValue !== "none" &&
-          (filterValue.sortDirection === "asc" ? (
-            <S.FontAwesomeIcon
-              icon="arrow-up"
-              onClick={() => {
-                setFilterValue({ ...filterValue, sortDirection: "des" })
-              }}
-            />
-          ) : (
-            <S.FontAwesomeIcon
-              icon="arrow-down"
-              onClick={() => {
-                setFilterValue({ ...filterValue, sortDirection: "asc" })
-              }}
-            />
-          ))}
-      </span>
+      <>FirstName</>
       <InputBase
         placeholder="Search…"
         inputProps={{
@@ -231,16 +174,5 @@ const S = {
   `,
   FontAwesomeIcon: styled(FontAwesomeIcon)`
     padding: 8px 8px;
-  `,
-  Select: styled(Select)`
-    display: inline;
-    .MuiSelect-select {
-      color: #fff;
-      width: 120px;
-    }
-    .MuiSelect-icon {
-      color: #fff;
-      outline: #fff;
-    }
   `,
 }
