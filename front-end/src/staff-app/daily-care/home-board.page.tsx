@@ -172,7 +172,4 @@ const S = {
       border-radius: ${BorderRadius.default};
     }
   `,
-  FontAwesomeIcon: styled(FontAwesomeIcon)`
-    padding: 8px 8px;
-  `,
 }
